@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mascota Virtual — Demo</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#6ee7b7; --muted:#94a3b8; --danger:#fb7185;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#071127 0%, #071a1f 100%); color:#e6eef6}
+
+    /* Contenedor principal */
+    .wrap{width:920px; max-width:95%; display:grid; grid-template-columns: 1fr 360px; gap:24px; align-items:start}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:20px; border-radius:14px; box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+
+    /* Zona de mascota */
+    .pet-area{display:flex; flex-direction:column; align-items:center; gap:18px; padding:28px}
+    .pet-stage{width:420px; max-width:100%; height:300px; background:linear-gradient(180deg,#082033 0%, #05202a 100%); border-radius:12px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden}
+    .pet{font-size:120px; transform-origin:center; transition:transform 300ms ease}
+    .pet.bounce{animation:bounce 900ms ease}
+    @keyframes bounce{0%{transform:translateY(0)}40%{transform:translateY(-18px)}100%{transform:translateY(0)}}
+
+    /* Menú flotante */
+    .floating{position:sticky; top:32px}
+    .stats{display:flex; flex-direction:column; gap:12px; width:100%}
+    .stat{display:flex; gap:12px; align-items:center}
+    .label{width:90px; font-size:14px; color:var(--muted)}
+    .progress{flex:1; height:12px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden}
+    .bar{height:100%; width:0%; background:linear-gradient(90deg,var(--accent), #38bdf8); border-radius:999px; transition:width 300ms linear}
+    .value{width:48px; text-align:right; font-variant-numeric:tabular-nums}
+
+    .controls{display:flex; gap:8px; margin-top:14px}
+    button.btn{background:transparent; border:1px solid rgba(255,255,255,0.06); color:inherit; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:600}
+    button.btn:active{transform:translateY(1px)}
+
+    .meta{font-size:13px; color:var(--muted); margin-top:6px}
+
+    /* small screens */
+    @media (max-width:880px){
+      .wrap{grid-template-columns:1fr;}
+      .floating{position:relative}
+    }
+
+    /* colores de barra por tipo */
+    .bar.happiness{background:linear-gradient(90deg,#ffd166,#ff8fab)}
+    .bar.life{background:linear-gradient(90deg,#6ee7b7,#22c55e)}
+    .bar.hunger{background:linear-gradient(90deg,#ffd166,#ffb020)}
+    .bar.clean{background:linear-gradient(90deg,#60a5fa,#a78bfa)}
+
+    /* estado de advertencia */
+    .danger{color:var(--danger)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card pet-area">
+      <h2 style="margin:0">Tu mascota virtual</h2>
+      <p class="meta">Interactúa con los botones para cambiar sus valores. Los valores cambian con el tiempo y se guardan en tu navegador.</p>
+
+      <div class="pet-stage" id="petStage">
+        <div id="pet" class="pet" aria-live="polite">😺</div>
+        <!-- efectos y mensajes -->
+        <div id="petMsg" style="position:absolute;left:14px;top:14px;font-size:13px;color:var(--muted)"></div>
+      </div>
+
+      <div style="width:100%; display:flex; justify-content:space-between; gap:12px; margin-top:8px">
+        <div style="flex:1">
+          <div style="font-size:13px;color:var(--muted)">Última acción:</div>
+          <div id="lastAction" style="font-weight:700">—</div>
+        </div>
+        <div style="width:120px;text-align:right">
+          <div style="font-size:13px;color:var(--muted)">Guardado:</div>
+          <div id="savedAt">—</div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="card floating">
+      <h3 style="margin:0 0 8px 0">Estado</h3>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Felicidad</div>
+          <div class="progress" title="Felicidad">
+            <div id="barHappiness" class="bar happiness" style="width:0%"></div>
+          </div>
+          <div class="value" id="valHappiness">0</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">Vida</div>
+          <div class="progress" title="Vida">
+            <div id="barLife" class="bar life" style="width:0%"></div>
+          </div>
+          <div class="value" id="valLife">0</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">Hambre</div>
+          <div class="progress" title="Hambre">
+            <div id="barHunger" class="bar hunger" style="width:0%"></div>
+          </div>
+          <div class="value" id="valHunger">0</div>
+        </div>
+
+        <div class="stat">
+          <div class="label">Limpieza</div>
+          <div class="progress" title="Limpieza">
+            <div id="barClean" class="bar clean" style="width:0%"></div>
+          </div>
+          <div class="value" id="valClean">0</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="btnPlay">Jugar</button>
+        <button class="btn" id="btnFeed">Dar de comer</button>
+        <button class="btn" id="btnClean">Limpiar</button>
+        <button class="btn" id="btnHeal">Curar</button>
+      </div>
+
+      <div style="margin-top:12px;font-size:13px;color:var(--muted)">Consejo: si <span id="lowWarnings"></span></div>
+    </aside>
+  </div>
+
+  <script>
+    // Valores (variables) — puedes cambiarlos desde aquí o mediante los botones
+    const defaults = { happiness: 80, life: 100, hunger: 30, clean: 85 };
+    const caps = { min: 0, max: 100 };
+
+    // Decaimiento por segundo (puedes ajustarlo)
+    const decay = { happiness: 0.02, life: 0.003, hunger: 0.04, clean: 0.015 };
+
+    // Carga / guarda
+    const STORAGE_KEY = 'mascota_virtual_v1';
+
+    let state = loadState() || createStateFrom(defaults);
+
+    // Elementos
+    const petEl = document.getElementById('pet');
+    const petMsg = document.getElementById('petMsg');
+    const lastAction = document.getElementById('lastAction');
+    const savedAt = document.getElementById('savedAt');
+
+    const barHappiness = document.getElementById('barHappiness');
+    const barLife = document.getElementById('barLife');
+    const barHunger = document.getElementById('barHunger');
+    const barClean = document.getElementById('barClean');
+
+    const valHappiness = document.getElementById('valHappiness');
+    const valLife = document.getElementById('valLife');
+    const valHunger = document.getElementById('valHunger');
+    const valClean = document.getElementById('valClean');
+
+    const btnPlay = document.getElementById('btnPlay');
+    const btnFeed = document.getElementById('btnFeed');
+    const btnClean = document.getElementById('btnClean');
+    const btnHeal = document.getElementById('btnHeal');
+
+    const lowWarnings = document.getElementById('lowWarnings');
+
+    // Actualiza UI
+    function render(){
+      setBar(barHappiness, state.happiness);
+      setBar(barLife, state.life);
+      setBar(barHunger, state.hunger);
+      setBar(barClean, state.clean);
+
+      valHappiness.textContent = Math.round(state.happiness);
+      valLife.textContent = Math.round(state.life);
+      valHunger.textContent = Math.round(state.hunger);
+      valClean.textContent = Math.round(state.clean);
+
+      savedAt.textContent = state.savedAt ? new Date(state.savedAt).toLocaleString() : '—';
+
+      // Cambia la emoji según estados
+      petEl.classList.remove('bounce');
+      void petEl.offsetWidth; // reflow para reiniciar animación
+      petEl.classList.add('bounce');
+
+      petEl.textContent = chooseEmoji();
+
+      // Mensaje de advertencia
+      const low = [];
+      if(state.hunger < 25) low.push('hambre');
+      if(state.clean < 25) low.push('suciedad');
+      if(state.life < 30) low.push('salud');
+      if(state.happiness < 25) low.push('felicidad');
+      lowWarnings.textContent = low.length ? low.join(' y ') : 'todo bien';
+
+      // Color de números en rojo si están bajos
+      valHunger.className = state.hunger < 20 ? 'danger' : '';
+      valClean.className = state.clean < 20 ? 'danger' : '';
+      valHappiness.className = state.happiness < 20 ? 'danger' : '';
+      valLife.className = state.life < 20 ? 'danger' : '';
+    }
+
+    function setBar(el, value){ el.style.width = clamp(value, caps.min, caps.max) + '%'; }
+
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function chooseEmoji(){
+      // Prioriza vida: si vida baja -> enfermo
+      if(state.life <= 0) return '💀';
+      if(state.life < 30) return '🤒';
+      if(state.hunger < 15) return '😿';
+      if(state.clean < 10) return '🤢';
+      if(state.happiness > 75) return '😸';
+      if(state.happiness > 40) return '😺';
+      return '😐';
+    }
+
+    // Simula el paso del tiempo: decaimiento
+    let lastTick = Date.now();
+    function tick(){
+      const now = Date.now();
+      const dt = (now - lastTick) / 1000; // segundos
+      lastTick = now;
+
+      // Aplica decaimiento proporcional al tiempo transcurrido
+      state.happiness = clamp(state.happiness - decay.happiness * dt * 60, caps.min, caps.max);
+      state.life = clamp(state.life - decay.life * dt * 60, caps.min, caps.max);
+      state.hunger = clamp(state.hunger + decay.hunger * dt * 60, caps.min, caps.max); // el hambre sube
+      state.clean = clamp(state.clean - decay.clean * dt * 60, caps.min, caps.max);
+
+      // Si hambre muy alta -> reduce vida y felicidad
+      if(state.hunger > 85){ state.life -= 0.02 * dt * 60; state.happiness -= 0.03 * dt * 60; }
+
+      // Guarda periódicamente
+      if(now - (state._lastSaved || 0) > 5000){ saveState(); }
+
+      render();
+      requestAnimationFrame(tick);
+    }
+
+    // Interacciones
+    btnPlay.addEventListener('click', ()=>{
+      state.happiness = clamp(state.happiness + 18, caps.min, caps.max);
+      state.hunger = clamp(state.hunger + 6, caps.min, caps.max);
+      state.clean = clamp(state.clean - 3, caps.min, caps.max);
+      state.lastAction = 'Jugaste con tu mascota';
+      flashMsg('+ felicidad');
+      saveState();
+    });
+
+    btnFeed.addEventListener('click', ()=>{
+      state.hunger = clamp(state.hunger - 30, caps.min, caps.max);
+      state.happiness = clamp(state.happiness + 6, caps.min, caps.max);
+      state.lastAction = 'Le diste de comer';
+      flashMsg('🍖 Yum!');
+      saveState();
+    });
+
+    btnClean.addEventListener('click', ()=>{
+      state.clean = clamp(state.clean + 35, caps.min, caps.max);
+      state.happiness = clamp(state.happiness + 4, caps.min, caps.max);
+      state.lastAction = 'Lo limpiaste';
+      flashMsg('✨ Limpio');
+      saveState();
+    });
+
+    btnHeal.addEventListener('click', ()=>{
+      state.life = clamp(state.life + 25, caps.min, caps.max);
+      state.happiness = clamp(state.happiness + 2, caps.min, caps.max);
+      state.lastAction = 'Le diste medicina';
+      flashMsg('💊 Mejorando');
+      saveState();
+    });
+
+    // Mensaje flotante temporal
+    function flashMsg(text, time=1200){
+      petMsg.textContent = text;
+      petMsg.style.opacity = '1';
+      setTimeout(()=>{ petMsg.style.opacity = '0'; petMsg.textContent = ''; }, time);
+    }
+
+    function saveState(){
+      state.savedAt = Date.now();
+      state._lastSaved = Date.now();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      savedAt.textContent = new Date(state.savedAt).toLocaleString();
+      lastAction.textContent = state.lastAction || '—';
+    }
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return null;
+        const parsed = JSON.parse(raw);
+        // Normaliza
+        parsed.happiness = Number(parsed.happiness) || 0;
+        parsed.life = Number(parsed.life) || 0;
+        parsed.hunger = Number(parsed.hunger) || 0;
+        parsed.clean = Number(parsed.clean) || 0;
+        return parsed;
+      }catch(e){ console.warn('No se pudo cargar estado', e); return null; }
+    }
+
+    function createStateFrom(obj){
+      return {
+        happiness: obj.happiness || 50,
+        life: obj.life || 100,
+        hunger: obj.hunger || 50,
+        clean: obj.clean || 50,
+        lastAction: 'Iniciado',
+        savedAt: null
+      };
+    }
+
+    // Inicia
+    render();
+    requestAnimationFrame(()=>{ lastTick = Date.now(); tick(); });
+
+    // Guardado manual antes de cerrar
+    window.addEventListener('beforeunload', ()=>{ saveState(); });
+
+    // Atajos de teclado (opcional)
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === '1') btnPlay.click();
+      if(e.key === '2') btnFeed.click();
+      if(e.key === '3') btnClean.click();
+      if(e.key === '4') btnHeal.click();
+    });
+
+    // Exponer estado en consola para pruebas (es variable JS)
+    window.mascota = state;
+  </script>
+</body>
+</html>
