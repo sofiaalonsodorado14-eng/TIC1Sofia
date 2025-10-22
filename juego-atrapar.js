@@ -42,7 +42,7 @@ chick.addEventListener('click', () => {
 
   // Sumar 1 segundo al temporizador, sin pasarse del máximo
   if(timeLeft < maxTime) {
-    timeLeft++;
+    timeLeft+=0.5;
     timerEl.textContent = timeLeft;
   }
 });
@@ -61,3 +61,4 @@ const timer = setInterval(() => {
     chick.style.pointerEvents = 'none';
   }
 }, 1000);
+
