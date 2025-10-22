@@ -6,11 +6,14 @@ const rows = 10;
 const cols = 10;
 const cellSize = 50;
 let score = 0;
-let timeLeft = 10;
-const maxTime = 20; // máximo tiempo permitido
+let timeLeft = 20.0; // tiempo con decimales
+const maxTime = 20.0; // tiempo máximo permitido
+
+// Límite superior (para evitar que el pollito aparezca muy arriba)
+const topLimit = 120; // píxeles desde arriba
 
 // Crear fondo con casillas
-for(let i = 0; i < rows * cols; i++){
+for (let i = 0; i < rows * cols; i++) {
   const cell = document.createElement('div');
   cell.classList.add('cell');
   game.appendChild(cell);
@@ -25,40 +28,46 @@ chick.style.width = '50px';
 chick.style.height = '50px';
 game.appendChild(chick);
 
-// Función para mover el pollito a una posición aleatoria
+// Función para mover el pollito
 function moveChick() {
-  const maxPosition = 500 - 50; // contenedor 500px, pollito 50px
-  const top = Math.floor(Math.random() * (maxPosition + 1));
-  const left = Math.floor(Math.random() * (maxPosition + 1));
+  const maxX = 500 - 50; // ancho del contenedor - tamaño del pollito
+  const maxY = 500 - 50; // alto del contenedor - tamaño del pollito
+
+  const top = Math.floor(Math.random() * (maxY - topLimit + 1)) + topLimit;
+  const left = Math.floor(Math.random() * (maxX + 1));
+
   chick.style.top = top + 'px';
   chick.style.left = left + 'px';
 }
 
-// Evento al hacer clic en el pollito
+// Al hacer clic en el pollito
 chick.addEventListener('click', () => {
   score++;
-  scoreEl.textContent = score; // actualizar puntos
-  moveChick(); // mover pollito
+  scoreEl.textContent = score;
+  moveChick();
 
-  // Sumar 1 segundo al temporizador, sin pasarse del máximo
-  if(timeLeft < maxTime) {
-    timeLeft+=0.5;
-    timerEl.textContent = timeLeft;
+  // Añadir 0.5 segundos, sin superar el máximo
+  if (timeLeft < maxTime) {
+    timeLeft += 0.5;
+    if (timeLeft > maxTime) timeLeft = maxTime;
+    timerEl.textContent = timeLeft.toFixed(1);
   }
 });
 
 // Posición inicial
 moveChick();
 
-// Temporizador de 20 segundos
+// Temporizador cada 0.1 segundos para más precisión
 const timer = setInterval(() => {
-  timeLeft--;
-  timerEl.textContent = timeLeft;
-  if(timeLeft <= 0){
+  timeLeft -= 0.1;
+  if (timeLeft < 0) timeLeft = 0;
+  timerEl.textContent = timeLeft.toFixed(1);
+
+  if (timeLeft <= 0) {
     clearInterval(timer);
     alert('¡Se acabó el tiempo! Tu puntuación: ' + score);
-    chick.removeEventListener('click', moveChick);
     chick.style.pointerEvents = 'none';
   }
-}, 1000);
+}, 100);
+
 
