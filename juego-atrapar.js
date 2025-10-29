@@ -30,7 +30,7 @@ game.appendChild(chick);
 
 // Función para mover el pollito
 function moveChick() {
-  const maxX = 500 - 50; // ancho del contenedor - tamaño del pollito
+  const maxX = 1000 - 50; // ancho del contenedor - tamaño del pollito
   const maxY = 500 - 50; // alto del contenedor - tamaño del pollito
 
   const top = Math.floor(Math.random() * (maxY - topLimit + 1)) + topLimit;
@@ -69,5 +69,6 @@ const timer = setInterval(() => {
     chick.style.pointerEvents = 'none';
   }
 }, 100);
+
 
 
