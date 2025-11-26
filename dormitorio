@@ -79,7 +79,6 @@
       <div class="controls">
         <button class="btn" id="btnPlay"></button>
         <button class="btn" id="btnFeed"></button>
-        <button class="btn" id="btnHeal"></button>
       </div>
 
       <div style="margin-top:0px;font-size:0px;color:var(--muted)"> <span id="lowWarnings"></span></div>
@@ -95,6 +94,7 @@
   
   <div class="boton">
   <button class="btn" id="btnClean">Acostar</button>
+  <button class="btn" id="btnHeal">Curar</button>
   </div>
 
   <div style="display: flex; gap: 175px;">
